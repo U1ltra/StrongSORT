@@ -19,7 +19,7 @@ if __name__ == '__main__':
         model.load_state_dict(torch.load(opt.path_AFLink))
         dataset = LinkData('', '')
     for i, seq in enumerate(opt.sequences, start=1):
-        print('processing the {}th video {}...'.format(i, seq))
+        print('\nprocessing the {}th video {}...'.format(i, seq))
         path_save = join(opt.dir_save, seq + '.txt')
         run(
             sequence_dir=join(opt.dir_dataset, seq),
@@ -30,7 +30,7 @@ if __name__ == '__main__':
             min_detection_height=opt.min_detection_height,
             max_cosine_distance=opt.max_cosine_distance,
             nn_budget=opt.nn_budget,
-            display=False
+            display=True
         )
         if opt.AFLink:
             linker = AFLink(
@@ -50,6 +50,7 @@ if __name__ == '__main__':
                 interval=20,
                 tau=10
             )
+        # raise NotImplementedError
 
 
 

@@ -40,6 +40,39 @@ data = {
     }
 }
 
+import os
+
+def get_directory_names(path):
+    """
+    Returns a list of directory names in the specified path.
+    
+    Args:
+        path (str): The path to search for directories
+        
+    Returns:
+        list: A list of directory names (excluding files)
+        
+    Example:
+        dirs = get_directory_names('/home/user/documents')
+        # Returns: ['folder1', 'folder2', etc.]
+    """
+    try:
+        # Get all items in the directory
+        all_items = os.listdir(path)
+        
+        # Filter to only include directories using full paths for checking
+        directories = [item for item in all_items 
+                      if os.path.isdir(os.path.join(path, item))]
+        
+        return directories
+        
+    except FileNotFoundError:
+        print(f"Error: Path '{path}' not found")
+        return []
+    except PermissionError:
+        print(f"Error: Permission denied for path '{path}'")
+        return []
+
 class opts:
     def __init__(self):
         self.parser = argparse.ArgumentParser()
@@ -96,7 +129,9 @@ class opts:
         self.parser.add_argument(
             '--root_dataset',
             type=str,
-            default='/data/dyh/data/MOTChallenge'
+            default='/home/jiaruili/Documents/exp/advTraj/baselines/surveillance_camera',
+            required=True
+            # default='/home/share/MOT'
         )
         self.parser.add_argument(
             '--path_AFLink',
@@ -106,7 +141,7 @@ class opts:
         self.parser.add_argument(
             '--dir_save',
             type=str,
-            default='/data/dyh/results/StrongSORT_Git/tmp'
+            required=True
         )
         self.parser.add_argument(
             '--EMA_alpha',
@@ -129,7 +164,8 @@ class opts:
         opt.min_detection_height = 0
         if opt.BoT:
             opt.max_cosine_distance = 0.4
-            opt.dir_dets = '/data/dyh/results/StrongSORT_Git/{}_{}_YOLOX+BoT'.format(opt.dataset, opt.mode)
+            opt.dir_dets = join(opt.root_dataset, "det_feats")
+            # opt.dir_dets = '/home/jiaruili/Documents/exp/StrongSORT/{}_{}_YOLOX+BoT'.format(opt.dataset, opt.mode)
         else:
             opt.max_cosine_distance = 0.3
             opt.dir_dets = '/data/dyh/results/StrongSORT_Git/{}_{}_YOLOX+simpleCNN'.format(opt.dataset, opt.mode)
@@ -140,14 +176,30 @@ class opts:
         else:
             opt.nn_budget = 100
         if opt.ECC:
-            path_ECC = '/data/dyh/results/StrongSORT_Git/{}_ECC_{}.json'.format(opt.dataset, opt.mode)
+            path_ECC = join(opt.root_dataset, "ecc.json")
+            # path_ECC = '/home/jiaruili/Documents/exp/advTraj/baselines/surveillance_camera/ecc.json'
+            # path_ECC = '/home/jiaruili/Documents/exp/StrongSORT/{}_ECC_{}.json'.format(opt.dataset, opt.mode)
             opt.ecc = json.load(open(path_ECC))
-        opt.sequences = data[opt.dataset][opt.mode]
-        opt.dir_dataset = join(
-            opt.root_dataset,
-            opt.dataset,
-            'train' if opt.mode == 'val' else 'test'
-        )
+        
+        if opt.dataset not in data or opt.mode not in data[opt.dataset]:
+            opt.sequences = get_directory_names(join(opt.root_dataset, "imgs"))
+            print(f"{len(opt.sequences)} sequences found in {opt.root_dataset}")
+        else:
+            opt.sequences = data[opt.dataset][opt.mode]
+        # opt.dir_dataset = join(
+        #     opt.root_dataset,
+        #     opt.dataset,
+        #     'train' if opt.mode == 'val' else 'test'
+        # )
+        opt.dir_dataset = join(opt.root_dataset, "imgs")
+
+        # create dir_save if not exist
+        opt.dir_save = join(opt.dir_save, f"strongSORT_det")
+        if not os.path.exists(opt.dir_save):
+            os.makedirs(opt.dir_save)
+        else:
+            raise ValueError(f"{opt.dir_save} already exists")
+
         return opt
 
 opt = opts().parse()

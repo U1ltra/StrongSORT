@@ -148,7 +148,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description="ecc")
     parser.add_argument(
         "--mot_dir", help="Path to MOTChallenge directory (train or test)",
-        default="F:/MCPRL/MOT/data/MOT20/train")
+        default="/home/jiaruili/Documents/exp/advTraj/baselines/parallel_baseline_atk/imgs")
+    parser.add_argument(
+        "--dump_name", help="Name of the dump file", default="ecc")
+    
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -160,12 +163,12 @@ if __name__ == "__main__":
         res={}
         print("Running sequence %s" % sequence)
         sequence_dir = os.path.join(args.mot_dir, sequence)
-        pictures = os.listdir(sequence_dir+"/img1")
+        pictures = os.listdir(sequence_dir)
         for i in range(1,len(pictures)):
             s=pictures[i].split('.')[0]
             s="%d" %int(s)
-            src_dir=os.path.join(sequence_dir+"/img1", pictures[i-1])
-            dst_dir=os.path.join(sequence_dir+"/img1", pictures[i])
+            src_dir=os.path.join(sequence_dir, pictures[i-1])
+            dst_dir=os.path.join(sequence_dir, pictures[i])
             src = cv2.imread(src_dir)
             dst = cv2.imread(dst_dir)
             warp_matrix, src_aligned = ECC(src, dst, warp_mode = cv2.MOTION_EUCLIDEAN, eps = 1e-5,
@@ -175,7 +178,7 @@ if __name__ == "__main__":
             res[s]=warp_matrix.tolist()
         result[sequence]=res    
     
-    with open("F:/MCPRL/MOT/data/MOT20/MOT20_ECC_train.json","w") as f:
+    with open(f"{args.mot_dir}/../{args.dump_name}.json","w") as f:
         json.dump(result,f)
     print(datetime.now())
     

@@ -2,6 +2,8 @@
 import numpy as np
 import colorsys
 from .image_viewer import ImageViewer
+import cv2
+import os
 
 
 def create_unique_color_float(tag, hue_step=0.41):
@@ -108,6 +110,17 @@ class Visualization(object):
 
     def set_image(self, image):
         self.viewer.image = image
+
+    def save_image(self, output_dir, suffix=""):
+        """
+        Save the current frame with all visualizations.
+        Args:
+            suffix (str): Optional suffix to add to the filename
+        """
+        if hasattr(self.viewer, 'image') and self.viewer.image is not None:
+            filename = f"frame_{self.frame_idx:06d}{suffix}.jpg"
+            output_path = os.path.join(output_dir, filename)
+            cv2.imwrite(output_path, self.viewer.image)
 
     def draw_groundtruth(self, track_ids, boxes):
         self.viewer.thickness = 2

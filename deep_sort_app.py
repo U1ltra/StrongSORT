@@ -41,7 +41,11 @@ def gather_sequence_info(sequence_dir, detection_file):
         * max_frame_idx: Index of the last frame.
 
     """
-    image_dir = os.path.join(sequence_dir, "img1")
+    # if img1 does not exist, use the original image folder
+    if os.path.exists(os.path.join(sequence_dir, "img1")):
+        image_dir = os.path.join(sequence_dir, "img1")
+    else:
+        image_dir = sequence_dir
     image_filenames = {
         int(os.path.splitext(f)[0]): os.path.join(image_dir, f)
         for f in os.listdir(image_dir)}
@@ -65,7 +69,7 @@ def gather_sequence_info(sequence_dir, detection_file):
         min_frame_idx = min(image_filenames.keys())
         max_frame_idx = max(image_filenames.keys())
     else:
-        min_frame_idx = int(detections[:, 0].min())
+        min_frame_idx = int(detections[:, 0].min()) # work with new dataset with detections as groundtruth
         max_frame_idx = int(detections[:, 0].max())
 
     info_filename = os.path.join(sequence_dir, "seqinfo.ini")
@@ -158,6 +162,18 @@ def run(sequence_dir, detection_file, output_file, min_confidence,
         If True, show visualization of intermediate tracking results.
 
     """
+    # print the arguments
+    print("sequence_dir: ", sequence_dir)
+    print("detection_file: ", detection_file)
+    print("output_file: ", output_file)
+    print("min_confidence: ", min_confidence)
+    print("nms_max_overlap: ", nms_max_overlap)
+    print("min_detection_height: ", min_detection_height)
+    print("max_cosine_distance: ", max_cosine_distance)
+    print("nn_budget: ", nn_budget)
+    print("display: ", display)
+    # return
+
     seq_info = gather_sequence_info(sequence_dir, detection_file)
     metric = nn_matching.NearestNeighborDistanceMetric(
         'cosine',
@@ -196,6 +212,14 @@ def run(sequence_dir, detection_file, output_file, min_confidence,
             vis.set_image(image.copy())
             vis.draw_detections(detections)
             vis.draw_trackers(tracker.tracks)
+
+            # save the image
+            os.makedirs(output_file.replace(".txt", ""), exist_ok=True)
+            vis.save_image(
+                output_file.replace(".txt", ""),
+                suffix=f"_{frame_idx}"
+            )
+            # raise NotImplementedError
 
         # Store results.
         for track in tracker.tracks:
